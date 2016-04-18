@@ -4,24 +4,35 @@
  * @param {Node} main - Main element of the page
  */
 class A11yDialog {
-  constructor (node, main) {
+  constructor(node, main) {
     let namespace = 'data-a11y-dialog';
 
-    this.focusableElements = ['a[href]', 'area[href]', 'input:not([disabled])', 'select:not([disabled])', 'textarea:not([disabled])', 'button:not([disabled])', 'iframe', 'object', 'embed', '[contenteditable]', '[tabindex]:not([tabindex^="-"])'];
+    this.focusableElements = [
+      'a[href]',
+      'area[href]',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      'button:not([disabled])',
+      'iframe',
+      'object',
+      'embed',
+      '[contenteditable]',
+      '[tabindex]:not([tabindex^="-"])'];
     this.focusedBeforeDialog = null;
     this.node = node;
     this.main = main || document.querySelector('#main');
     this.shown = false;
 
-    //since we dont hace any reference to the function that attached
+    // since we dont hace any reference to the function that attached
     this.showBind = this.show.bind(this);
     this.hideBind = this.hide.bind(this);
 
-    for(let opener of this._$$('[' + namespace + '-show="' + this.node.id + '"]')) {
+    for (let opener of this._$$(`[${namespace}-show="${this.node.id}"]`)) {
       opener.addEventListener('click', this.showBind);
     }
 
-    for(let closer of this._$$('[' + namespace + '-hide]', this.node).concat(this._$$('[' + namespace + '-hide="' + this.node.id + '"]'))) {
+    for (let closer of this._$$(`[${namespace}-hide]`, this.node).concat(this._$$(`[${namespace}-hide="${this.node.id}"]`))) {
       closer.addEventListener('click', this.hideBind);
     }
 
@@ -37,13 +48,13 @@ class A11yDialog {
     });
   }
 
-  maintainFocus (event) {
+  maintainFocus(event) {
     if (this.shown && !this.node.contains(event.target)) {
       this._setFocusToFirstItem(this.node);
     }
   }
 
-  show () {
+  show() {
     this.shown = true;
     this.node.removeAttribute('aria-hidden');
     this.main.setAttribute('aria-hidden', 'true');
@@ -55,28 +66,32 @@ class A11yDialog {
     document.body.addEventListener('focus', this.maintainFocusBind, true);
   }
 
-  hide () {
+  hide() {
     this.shown = false;
     this.node.setAttribute('aria-hidden', 'true');
     this.main.removeAttribute('aria-hidden');
-    this.focusedBeforeDialog && this.focusedBeforeDialog.focus();
+
+    if (this.focusedBeforeDialog) {
+      this.focusedBeforeDialog.focus();
+    }
+
     document.body.removeEventListener('focus', this.maintainFocusBind, true);
   }
 
   // Helper function to get all focusable children from a node
-  _getFocusableChildren (node) {
+  _getFocusableChildren(node) {
     return this._$$(this.focusableElements.join(','), node).filter((child) => {
       return !!(child.offsetWidth || child.offsetHeight || child.getClientRects().length);
     });
   }
 
   // Helper function to get all nodes in context matching selector as an array
-  _$$ (selector, context) {
+  _$$(selector, context) {
     return Array.prototype.slice.call((context || document).querySelectorAll(selector));
   }
 
   // Helper function trapping the tab key inside a node
-  _trapTabKey (node, event) {
+  _trapTabKey(node, event) {
     let focusableChildren = this._getFocusableChildren(node);
     let focusedItemIndex = focusableChildren.indexOf(document.activeElement);
 
@@ -90,7 +105,7 @@ class A11yDialog {
   }
 
   // Helper function to focus first focusable item in node
-  _setFocusToFirstItem (node) {
+  _setFocusToFirstItem(node) {
     let focusableChildren = this._getFocusableChildren(node);
     if (focusableChildren.length) {
       focusableChildren[0].focus();
@@ -98,4 +113,4 @@ class A11yDialog {
   }
 }
 
-export default A11yDialog
+export default A11yDialog;
